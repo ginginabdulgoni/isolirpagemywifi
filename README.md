@@ -53,6 +53,10 @@ COMPANY_EMAIL="info@mywifi.web.id"
 2. Masukkan **No Layanan**, lalu klik **Cek Tagihan**.
 3. Sistem akan menampilkan data tagihan jika ada.
 
+## Tampilan Halaman Cek Tagihan
+
+![Halaman Cek Tagihan](assets/screenshot.png)
+
 ## 📞 Kontak
 
 - Website: [1112-project.com](https://1112-project.com)
