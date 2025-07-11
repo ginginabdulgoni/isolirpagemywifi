@@ -5,13 +5,44 @@ use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
+
+$companyName    = $_ENV['COMPANY_NAME'] ?? 'Perusahaan Anda';
+$companyAddress = $_ENV['COMPANY_ADDRESS'] ?? '';
+$companyPhone   = $_ENV['COMPANY_PHONE'] ?? '';
+$companyEmail   = $_ENV['COMPANY_EMAIL'] ?? '';
+$apiKey         = $_ENV['API_KEY'] ?? '';
+$baseUrl        = $_ENV['API_BASE_URL'] ?? '';
+
+if (isset($_GET['action']) && $_GET['action'] === 'cek_tagihan') {
+    header('Content-Type: application/json');
+
+    $noServices = $_GET['no_services'] ?? '';
+    if (!$noServices) {
+        echo json_encode([
+            'status' => false,
+            'message' => 'no_services is required',
+        ]);
+        exit;
+    }
+
+    $url = $baseUrl . '/api/bill/unpaid?no_services=' . urlencode($noServices);
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'X-MYWIFI-KEY: ' . $apiKey
+    ]);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    echo $response;
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
-    <title>Internet Diisolir | <?= $_ENV['COMPANY_NAME'] ?? 'Perusahaan Anda' ?></title>
+    <title>Internet Diisolir | <?= $companyName ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -57,21 +88,19 @@ $dotenv->load();
         }
     </style>
 </head>
-
 <body>
     <div class="container text-center mt-5">
-        <img src="https://cdn-icons-png.flaticon.com/512/565/565547.png" alt="Isolir" class="wifi-icon mb-3">
+        <img src="expired.png" alt="Isolir" class="wifi-icon mb-3">
         <div class="notice-header">MOHON MAAF</div>
         <div class="notice-sub">Layanan Internet Anda Saat Ini Diisolir</div>
 
-        <div class="box-alert mt-4 text-start mx-auto" style="max-width: 600px;">
-            <p><strong>Pelanggan Internet yang Terhormat,</strong></p>
-            <p>Kami informasikan bahwa layanan internet Anda saat ini sedang <strong>diisolir</strong> secara otomatis oleh sistem billing kami.</p>
-            <p>Dimohon untuk <strong>melakukan pembayaran tagihan</strong> agar layanan internet Anda dapat <strong>kembali normal</strong>.</p>
-            <p>Untuk menghindari ketidaknyamanan ini, mohon lakukan pembayaran <strong>tepat waktu</strong> setiap bulan.</p>
-            <p>Jika Anda memiliki pertanyaan, silakan hubungi admin layanan kami melalui kontak di bawah.</p>
-            <p class="text-center mb-0">~ Terima kasih ~</p>
-        </div>
+    <div class="box-alert mt-4 text-start mx-auto" style="max-width: 600px;">
+    <p><strong>Pelanggan Internet yang Terhormat,</strong></p>
+    <p>Layanan internet Anda <strong>diisolir</strong> oleh sistem kami karena keterlambatan pembayaran.</p>
+    <p>Segera lakukan <strong>pembayaran</strong> untuk mengaktifkan kembali layanan.</p>
+    <p>Butuh bantuan? Hubungi kami di bawah ini.</p>
+</div>
+
 
         <div class="card card-custom mt-5 p-4 mx-auto" style="max-width: 600px;">
             <h5 class="mb-3 text-start">Cek Tagihan Anda</h5>
@@ -82,70 +111,65 @@ $dotenv->load();
             <div id="hasil"></div>
         </div>
 
-        <div class="footer-contact mt-4">
-            <?php if (!empty($_ENV['COMPANY_NAME'])) : ?>
-                <p><strong><?= $_ENV['COMPANY_NAME'] ?></strong></p>
-            <?php endif; ?>
+       <div class="footer-contact mt-4">
+    <?php if ($companyName): ?><p><strong><?= $companyName ?></strong></p><?php endif; ?>
+    <?php if ($companyAddress): ?><p><?= $companyAddress ?></p><?php endif; ?>
 
-            <?php if (!empty($_ENV['COMPANY_ADDRESS'])) : ?>
-                <p><?= $_ENV['COMPANY_ADDRESS'] ?></p>
+    <?php if ($companyPhone || $companyEmail): ?>
+        <p>
+            <?php if ($companyPhone): ?>
+                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $companyPhone) ?>" target="_blank">
+                    Telp: <?= $companyPhone ?>
+                </a>
             <?php endif; ?>
-
-            <?php if (!empty($_ENV['COMPANY_PHONE']) || !empty($_ENV['COMPANY_EMAIL'])) : ?>
-                <p>
-                    <?php if (!empty($_ENV['COMPANY_PHONE'])) : ?>
-                        Telp: <?= $_ENV['COMPANY_PHONE'] ?>
-                    <?php endif; ?>
-                    <?php if (!empty($_ENV['COMPANY_PHONE']) && !empty($_ENV['COMPANY_EMAIL'])) : ?> | <?php endif; ?>
-                    <?php if (!empty($_ENV['COMPANY_EMAIL'])) : ?>
-                        Email: <?= $_ENV['COMPANY_EMAIL'] ?>
-                    <?php endif; ?>
-                </p>
+            <?php if ($companyPhone && $companyEmail): ?> | <?php endif; ?>
+            <?php if ($companyEmail): ?>
+                Email: <?= $companyEmail ?>
             <?php endif; ?>
-        </div>
+        </p>
+    <?php endif; ?>
+</div>
 
     </div>
+
     <footer class="text-center mt-5 mb-3 text-muted small">
         <hr>
         <p>Halaman ini dikembangkan oleh <strong>Gingin Abdul Goni</strong></p>
-        <p>
-            Bagian dari <a href="https://1112-project.com" target="_blank">1112 Project</a> &mdash;
-            Sistem billing: <a href="https://member.mywifi.web.id" target="_blank">MyWiFi</a>
-        </p>
-        <p>
-            Kunjungi repositori di
-            <a href="https://github.com/ginginabdulgoni" target="_blank">GitHub (@ginginabdulgoni)</a>
-        </p>
+        <p>Bagian dari <a href="https://1112-project.com" target="_blank">1112 Project</a> — Sistem billing: <a href="https://member.mywifi.web.id" target="_blank">MyWiFi</a></p>
+        <p>Kunjungi repositori di <a href="https://github.com/ginginabdulgoni" target="_blank">GitHub (@ginginabdulgoni)</a></p>
     </footer>
 
-
     <script>
+        const BASE_URL = "<?= $baseUrl ?>";
+
         function cekTagihan() {
-            const noServices = document.getElementById('no_services').value;
+            const noServices = document.getElementById('no_services').value.trim();
             if (!noServices) {
                 alert('Harap isi No Layanan');
                 return;
             }
 
-            fetch(`api_unpaid.php?no_services=${encodeURIComponent(noServices)}`)
+            fetch(`?action=cek_tagihan&no_services=${encodeURIComponent(noServices)}`)
                 .then(res => res.json())
                 .then(res => {
                     const hasil = document.getElementById('hasil');
                     if (res.status && res.data && res.data.length > 0) {
                         const tagihan = res.data[0];
+                        const checkoutUrl = `${BASE_URL}/checkout/payment?invoice=${tagihan.invoice}&noservices=${tagihan.no_services}`;
                         hasil.innerHTML = `
-                        <div class="alert alert-info text-start">
-                            <strong>${tagihan.name}</strong><br>
-                            No Layanan: <strong>${tagihan.no_services}</strong><br>
-                            Periode: ${tagihan.period}<br>
-                            Jumlah Tagihan: <strong>Rp ${tagihan.amount.toLocaleString('id-ID')}</strong><br>
-                            Jatuh Tempo: ${tagihan.due_date}<br>
-                            Status: <span class="badge bg-danger">${tagihan.status}</span>
-                        </div>
-                    `;
+                            <div class="alert alert-info text-start">
+                                <strong>${tagihan.name}</strong><br>
+                                No Layanan: <strong>${tagihan.no_services}</strong><br>
+                                Invoice: <strong>${tagihan.invoice}</strong><br>
+                                Periode: ${tagihan.period}<br>
+                                Jumlah Tagihan: <strong>Rp ${parseInt(tagihan.amount).toLocaleString('id-ID')}</strong><br>
+                                Jatuh Tempo: ${tagihan.due_date}<br>
+                                Status: <span class="badge bg-danger">${tagihan.status}</span><br><br>
+                                <a href="${checkoutUrl}" class="btn btn-success" target="_blank">Bayar Sekarang</a>
+                            </div>
+                        `;
                     } else {
-                        const pesan = res.message || 'Tagihan tidak ditemukan atau sudah lunas.';
-                        hasil.innerHTML = `<div class="alert alert-warning">${pesan}</div>`;
+                        hasil.innerHTML = `<div class="alert alert-warning">${res.message || 'Tagihan tidak ditemukan atau sudah lunas.'}</div>`;
                     }
                 })
                 .catch(err => {
@@ -155,5 +179,4 @@ $dotenv->load();
         }
     </script>
 </body>
-
 </html>
